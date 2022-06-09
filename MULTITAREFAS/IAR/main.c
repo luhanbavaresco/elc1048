@@ -1,15 +1,19 @@
 #include <stdint.h>
 #include <stdio.h>
+
 #include "multitarefas.h"
+
+semaforo cheio= 0;
+semaforo vazio = N;
+
 /*
  * Prototipos das tarefas
  */
-void tarefa1(void);
-void tarefa2(void);
-void tarefa3(void);
-void tarefa4(void);
-void tarefa5(void);
-void imprime(void);
+void tarefa_1(void);
+void tarefa_2(void);
+void tarefa_3(void);
+void produtor(void);
+void consumidor(void);
 
 /*
  * Configuracao dos tamanhos das pilhas
@@ -19,52 +23,37 @@ void imprime(void);
 #define TAM_PILHA_3		(TAM_MINIMO_PILHA + 24)
 #define TAM_PILHA_4		(TAM_MINIMO_PILHA + 24)
 #define TAM_PILHA_5		(TAM_MINIMO_PILHA + 24)
-#define TAM_PILHA_6		(TAM_MINIMO_PILHA + 24)
 #define TAM_PILHA_OCIOSA	(TAM_MINIMO_PILHA + 24)
 
 /*
  * Declaracao das pilhas das tarefas
  */
-uint32_t PILHA_TAREFA1[TAM_PILHA_1];
-uint32_t PILHA_TAREFA2[TAM_PILHA_2];
-uint32_t PILHA_TAREFA3[TAM_PILHA_3];
-uint32_t PILHA_TAREFA4[TAM_PILHA_4];
-uint32_t PILHA_TAREFA5[TAM_PILHA_5];
-uint32_t PILHA_TAREFA6[TAM_PILHA_6];
+uint32_t PILHA_TAREFA_1[TAM_PILHA_1];
+uint32_t PILHA_TAREFA_2[TAM_PILHA_2];
+uint32_t PILHA_TAREFA_3[TAM_PILHA_3];
+uint32_t PILHA_TAREFA_4[TAM_PILHA_4];
+uint32_t PILHA_TAREFA_5[TAM_PILHA_5];
 uint32_t PILHA_TAREFA_OCIOSA[TAM_PILHA_OCIOSA];
-/*
- * Declaracao das variaveis utilizadas no benchmark
- */
-
-uint32_t i=0, j=0, k=0, l=0, m=0, total=0;
 
 /*
  * Funcao principal de entrada do sistema
  */
 int main(void)
-{	
+{
+	
 	/* Criacao das tarefas */
 	/* Parametros: ponteiro, nome, ponteiro da pilha, tamanho da pilha, prioridade da tarefa */
 	
-	CriaTarefa(tarefa1, "Tarefa1", PILHA_TAREFA1, TAM_PILHA_1, 5);
+	CriaTarefa(tarefa_1, "Tarefa 1", PILHA_TAREFA_1, TAM_PILHA_1, 1);
+	
+	CriaTarefa(tarefa_2, "Tarefa 2", PILHA_TAREFA_2, TAM_PILHA_2, 2);
         
-        CriaTarefa(tarefa2, "Tarefa2", PILHA_TAREFA2, TAM_PILHA_2, 4);
-
-	CriaTarefa(tarefa3, "Tarefa3", PILHA_TAREFA3, TAM_PILHA_3, 3);
+        CriaTarefa(tarefa_3, "Tarefa 3", PILHA_TAREFA_3, TAM_PILHA_3, 3);
         
-        CriaTarefa(tarefa4, "Tarefa4", PILHA_TAREFA4, TAM_PILHA_4, 2);
+        CriaTarefa(produtor, "Produtor", PILHA_TAREFA_4, TAM_PILHA_4, 4);
         
-        CriaTarefa(tarefa5, "Tarefa5", PILHA_TAREFA5, TAM_PILHA_5, 1);
-        
-        CriaTarefa(imprime, "Imprime", PILHA_TAREFA6, TAM_PILHA_6, 6);
-        
-        // Coloca as tarefas 1,2,3 e 4 em espera, caso contrario, as variaveis contadoras
-        // irão incrementar de forma errada. EX: i=4, j=3, k=2, l=1, m=0 
-        TCB[1].estado = ESPERA;
-        TCB[2].estado = ESPERA;
-        TCB[3].estado = ESPERA;
-        TCB[4].estado = ESPERA;    
-        
+        CriaTarefa(consumidor, "consumidor", PILHA_TAREFA_5, TAM_PILHA_5, 5);
+	
 	/* Cria tarefa ociosa do sistema */
 	CriaTarefa(tarefa_ociosa,"Tarefa ociosa", PILHA_TAREFA_OCIOSA, TAM_PILHA_OCIOSA, 0);
 	
@@ -80,55 +69,60 @@ int main(void)
 	}
 }
 
-void tarefa1(){
-  
-        while(1){ 
-              i++;
-              TarefaSuspende(1);        //Suspende ela mesma
-        }
+
+/* Tarefas de exemplo que usam funcoes para suspender/continuar as tarefas */
+void tarefa_1(void)
+{
+	volatile uint16_t a = 0;
+	for(;;)
+	{
+		a++;
+		TarefaContinua(2);
+	
+	}
 }
 
-void tarefa2(){
-  
-        while(1){ 
-              j++;
-              TarefaContinua(1);        // Continua a proxima tarefa de maior prioridade
-              TarefaSuspende(2);        // Suspende ela mesma
-        }
-}  
-
-void tarefa3(){
-  
-        while(1){ 
-              k++;              
-              TarefaContinua(2);        // Continua a proxima tarefa de maior prioridade
-              TarefaSuspende(3);        // Suspende ela mesma
-        }
+void tarefa_2(void)
+{
+	volatile uint16_t b = 0;
+	for(;;)
+	{
+		b++;
+		TarefaSuspende(2);
+                TarefaContinua(3);
+                
+	}
 }
 
-void tarefa4(){
-  
-        while(1){ 
-              l++;
-              TarefaContinua(3);        // Continua a proxima tarefa de maior prioridade          
-              TarefaSuspende(4);        // Suspende ela mesma
-        }
-} 
+void tarefa_3(void)
+{
+	volatile uint16_t c = 0;
+	for(;;)
+	{
+		c++;
+		TarefaSuspende(3);	
+	}
+}
 
-void tarefa5(){
-  
-        while(1){ 
-              m++;
-              TarefaContinua(4);        // Continua a proxima tarefa de maior prioridade
-        }
-} 
-
-void imprime(){
-  
-        while(1){ 
-              total = i+j+k+l+m;
-              // Espera 30seg ate fazer a soma novamente
-              // Simulando e cronometrando, 1500 ticks equivale a 30segundos no meu notebook
-              TarefaEspera(1500);        
-        }
+void produtor(void)
+{
+	volatile uint16_t d = 0;
+	for(;;)
+	{
+		wait(vazio);
+                f = (f+1)%N;
+                buffer[f] = produz();
+                signal(cheio);
+	}
+}
+void produtor(void)
+{
+	volatile uint16_t e = 0;
+	for(;;)
+	{
+		wait(vazio);
+                f = (i+1)%N;
+                consome(buffer[i]);
+                signal(cheio);
+	}
 }
